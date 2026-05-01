@@ -1,0 +1,56 @@
+# mcp-gateway configuration
+# Copy this to gateway.yaml and fill in your values.
+# Environment variables are expanded: ${VAR_NAME}
+
+gateway:
+  port: 8080
+  auth:
+    type: "api-key"         # "api-key" | "jwt" | "none"
+    header: "X-Gateway-Key"
+    secret: "${GATEWAY_API_KEY}"
+
+servers:
+  # HTTP MCP server
+  - name: "filesystem-mcp"
+    transport: "http"
+    url: "http://localhost:3001"
+    health_check: true
+    circuit_breaker:
+      threshold: 3          # open circuit after 3 consecutive failures
+      timeout: "30s"        # half-open probe interval
+
+  # HTTP MCP server with bearer auth and tool prefix routing
+  - name: "github-mcp"
+    transport: "http"
+    url: "http://localhost:3002"
+    health_check: true
+    auth:
+      type: "bearer"
+      token: "${GITHUB_MCP_TOKEN}"
+    routing:
+      prefix: "github_"    # all tools prefixed github_* route here
+    circuit_breaker:
+      threshold: 5
+      timeout: "60s"
+
+  # STDIO MCP server (subprocess)
+  - name: "postgres-mcp"
+    transport: "stdio"
+    command: "npx @modelcontextprotocol/server-postgres"
+    env:
+      DATABASE_URL: "${DATABASE_URL}"
+    health_check: false     # health check not supported for stdio
+
+  # Another HTTP server — no routing rules means it's discovered by tool name
+  - name: "brave-search-mcp"
+    transport: "http"
+    url: "http://localhost:3003"
+    auth:
+      type: "api-key"
+      header: "X-Brave-Key"
+      token: "${BRAVE_SEARCH_API_KEY}"
+
+observability:
+  log_format: "json"         # "json" | "text"
+  otel_endpoint: "${OTEL_EXPORTER_OTLP_ENDPOINT}"
+  metrics_path: "/metrics"   # Prometheus-compatible metrics
