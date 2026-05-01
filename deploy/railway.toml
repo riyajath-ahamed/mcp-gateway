@@ -1,0 +1,19 @@
+# railway.toml — one-click Railway deployment for mcp-gateway
+# https://railway.app/new/template?template=https://github.com/configkits/mcp-gateway
+
+[build]
+  builder = "DOCKERFILE"
+  dockerfilePath = "Dockerfile"
+
+[deploy]
+  startCommand = "/mcp-gateway --config /etc/mcp-gateway/gateway.yaml"
+  restartPolicyType = "ON_FAILURE"
+  restartPolicyMaxRetries = 5
+
+[[deploy.healthcheckPath]]
+  path = "/health"
+  interval = 30
+  timeout = 5
+
+[environments.production.variables]
+  PORT = "8080"

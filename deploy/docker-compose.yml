@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  gateway:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./gateway.yaml:/etc/mcp-gateway/gateway.yaml:ro
+    environment:
+      - GITHUB_MCP_TOKEN=${GITHUB_MCP_TOKEN}
+      - DATABASE_URL=${DATABASE_URL}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/mcp-gateway", "--health-check"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Example: Jaeger for local OTel traces
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "4318:4318"     # OTLP HTTP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    profiles:
+      - observability
