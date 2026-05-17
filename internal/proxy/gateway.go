@@ -48,6 +48,10 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Gateway-Request-ID", reqID)
 
+	if !g.authenticate(w, r) {
+		return
+	}
+
 	// Normalise path — strip /mcp prefix
 	path := strings.TrimPrefix(r.URL.Path, "/mcp")
 	path = strings.Trim(path, "/")
@@ -222,6 +226,20 @@ func (g *Gateway) forwardRequest(r *http.Request, server *registry.ServerState, 
 	}
 
 	return g.client.Do(req)
+}
+
+func (g *Gateway) authenticate(w http.ResponseWriter, r *http.Request) bool {
+	auth := g.cfg.Gateway.Auth
+	if auth.Type == "" || auth.Type == "none" {
+		return true
+	}
+	if auth.Type == "api-key" {
+		if r.Header.Get(auth.Header) != auth.Secret {
+			g.writeError(w, http.StatusUnauthorized, -32001, "unauthorized")
+			return false
+		}
+	}
+	return true
 }
 
 func (g *Gateway) writeError(w http.ResponseWriter, httpStatus, code int, message string) {
