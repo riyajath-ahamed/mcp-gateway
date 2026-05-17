@@ -12,6 +12,7 @@ import (
 	"github.com/configkits/mcp-gateway/internal/config"
 	"github.com/configkits/mcp-gateway/internal/proxy"
 	"github.com/configkits/mcp-gateway/internal/registry"
+	"github.com/configkits/mcp-gateway/internal/router"
 )
 
 func testGateway(t *testing.T, tools []registry.MCPTool) *proxy.Gateway {
@@ -25,7 +26,11 @@ func testGateway(t *testing.T, tools []registry.MCPTool) *proxy.Gateway {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
 	reg := registry.New(cfg, logger)
 	registry.InjectTools(reg, "mock-server", tools)
-	return proxy.NewGateway(reg, cfg, logger)
+	rtr, err := router.New(cfg.Servers)
+	if err != nil {
+		t.Fatalf("router init: %v", err)
+	}
+	return proxy.NewGateway(reg, rtr, cfg, logger)
 }
 
 func rpcBody(method string, params any) *bytes.Buffer {
@@ -97,7 +102,11 @@ func TestGateway_AuthBlocksWithoutKey(t *testing.T) {
 	}
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
 	reg := registry.New(cfg, logger)
-	gw := proxy.NewGateway(reg, cfg, logger)
+	rtr, err := router.New(cfg.Servers)
+	if err != nil {
+		t.Fatalf("router init: %v", err)
+	}
+	gw := proxy.NewGateway(reg, rtr, cfg, logger)
 
 	req := httptest.NewRequest(http.MethodGet, "/mcp/tools/list", nil)
 	rr := httptest.NewRecorder()
@@ -117,7 +126,11 @@ func TestGateway_AuthAllowsWithKey(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
 	reg := registry.New(cfg, logger)
 	registry.InjectTools(reg, "s", []registry.MCPTool{{Name: "t", ServerName: "s"}})
-	gw := proxy.NewGateway(reg, cfg, logger)
+	rtr, err := router.New(cfg.Servers)
+	if err != nil {
+		t.Fatalf("router init: %v", err)
+	}
+	gw := proxy.NewGateway(reg, rtr, cfg, logger)
 
 	req := httptest.NewRequest(http.MethodGet, "/mcp/tools/list", nil)
 	req.Header.Set("X-Gateway-Key", "my-secret")

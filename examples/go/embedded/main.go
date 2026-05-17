@@ -14,6 +14,7 @@ import (
 	"github.com/configkits/mcp-gateway/internal/health"
 	"github.com/configkits/mcp-gateway/internal/proxy"
 	"github.com/configkits/mcp-gateway/internal/registry"
+	"github.com/configkits/mcp-gateway/internal/router"
 )
 
 func main() {
@@ -38,7 +39,13 @@ func main() {
 	hc := health.NewChecker(reg, logger)
 	go hc.Run(ctx, 0) // 0 uses the default 30s interval
 
-	gateway := proxy.NewGateway(reg, cfg, logger)
+	rtr, err := router.New(cfg.Servers)
+	if err != nil {
+		logger.Error("router init failed", "error", err)
+		os.Exit(1)
+	}
+
+	gateway := proxy.NewGateway(reg, rtr, cfg, logger)
 
 	// Mount gateway alongside your own routes
 	mux := http.NewServeMux()
