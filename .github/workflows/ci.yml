@@ -62,7 +62,7 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/configkits/mcp-gateway:latest
-            ghcr.io/configkits/mcp-gateway:${{ github.sha }}
+            ghcr.io/riyajath-ahamed/mcp-gateway:latest
+            ghcr.io/riyajath-ahamed/mcp-gateway:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
