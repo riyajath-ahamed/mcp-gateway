@@ -1,20 +1,60 @@
 package auth
 
 import (
+	"crypto/rand"
 	"crypto/subtle"
+	"encoding/hex"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 )
 
+type AuthType string
+
+const (
+	AuthTypeAPIKey AuthType = "api-key"
+	AuthTypeJWT    AuthType = "jwt"
+	AuthTypeNone   AuthType = "none"
+)
+
+type Config struct {
+	Type   AuthType
+	Header string
+	Secret string
+}
+
 // Validator is a function that validates an incoming request.
 type Validator func(r *http.Request) error
 
-// Middleware wraps an http.Handler with auth validation.
-func Middleware(validator Validator, next http.Handler) http.Handler {
+// GenerateAPIKey generates a cryptographically random API key of n bytes,
+// returned as a hex-encoded string.
+func GenerateAPIKey(n int) (string, error) {
+	b := make([]byte, n)
+	if _, err := rand.Read(b); err != nil {
+		return "", fmt.Errorf("generating API key: %w", err)
+	}
+	return hex.EncodeToString(b), nil
+}
+
+// Middleware builds a validator from the provided Config and wraps the handler
+// with auth validation. Unrecognised auth types are treated as "none".
+func Middleware(cfg Config, logger *slog.Logger, next http.Handler) http.Handler {
+	var v Validator
+	switch cfg.Type {
+	case AuthTypeAPIKey:
+		v = APIKeyValidator(cfg.Header, cfg.Secret)
+	case AuthTypeJWT:
+		v = JWTValidator(cfg.Secret)
+	default:
+		v = NoopValidator()
+	}
+
+	logger.Info("auth middleware configured", "type", string(cfg.Type))
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := validator(r); err != nil {
+		if err := v(r); err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
 			fmt.Fprintf(w, `{"jsonrpc":"2.0","error":{"code":-32001,"message":%q}}`, err.Error())

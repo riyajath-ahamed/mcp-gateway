@@ -1,12 +1,15 @@
 package auth_test
 
 import (
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/configkits/mcp-gateway/internal/auth"
 )
+
+var testLogger = slog.Default()
 
 func TestAPIKeyValidator_Valid(t *testing.T) {
 	v := auth.APIKeyValidator("X-Gateway-Key", "secret-key")
@@ -43,8 +46,8 @@ func TestNoopValidator_AlwaysPasses(t *testing.T) {
 }
 
 func TestMiddleware_BlocksUnauthorized(t *testing.T) {
-	v := auth.APIKeyValidator("X-Gateway-Key", "secret")
-	handler := auth.Middleware(v, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	cfg := auth.Config{Type: auth.AuthTypeAPIKey, Header: "X-Gateway-Key", Secret: "secret"}
+	handler := auth.Middleware(cfg, testLogger, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	req := httptest.NewRequest(http.MethodPost, "/mcp", nil)
@@ -56,8 +59,8 @@ func TestMiddleware_BlocksUnauthorized(t *testing.T) {
 }
 
 func TestMiddleware_AllowsAuthorized(t *testing.T) {
-	v := auth.APIKeyValidator("X-Gateway-Key", "secret")
-	handler := auth.Middleware(v, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	cfg := auth.Config{Type: auth.AuthTypeAPIKey, Header: "X-Gateway-Key", Secret: "secret"}
+	handler := auth.Middleware(cfg, testLogger, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	req := httptest.NewRequest(http.MethodPost, "/mcp", nil)
@@ -66,5 +69,28 @@ func TestMiddleware_AllowsAuthorized(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	if rr.Code != http.StatusOK {
 		t.Errorf("expected 200, got %d", rr.Code)
+	}
+}
+
+func TestGenerateAPIKey(t *testing.T) {
+	key, err := auth.GenerateAPIKey(32)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(key) != 64 {
+		t.Errorf("expected 64-char hex string, got %d chars", len(key))
+	}
+}
+
+func TestMiddleware_NoneType(t *testing.T) {
+	cfg := auth.Config{Type: auth.AuthTypeNone}
+	handler := auth.Middleware(cfg, testLogger, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	req := httptest.NewRequest(http.MethodPost, "/mcp", nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Errorf("expected 200 with auth type none, got %d", rr.Code)
 	}
 }
