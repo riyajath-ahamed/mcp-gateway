@@ -3,516 +3,1175 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>mcp-gateway · dashboard</title>
+<title>mcp-gateway</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#0b0c0e;--surface:#111318;--surface2:#181c23;--border:#1f2530;--border2:#2a3040;
-  --text:#e8eaf0;--muted:#6b7280;--accent:#3b82f6;--green:#10b981;--amber:#f59e0b;--red:#ef4444;
-  --mono:'Geist Mono',monospace;
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+
+:root {
+  --bg:        #ffffff;
+  --bg-hover:  #f7f7f5;
+  --bg-active: #efefed;
+  --bg-card:   #fbfbfa;
+  --border:    #e8e8e5;
+  --border-hi: #d5d5d0;
+  --text:      #37352f;
+  --text-2:    #787774;
+  --text-3:    #a0a09d;
+  --text-inv:  #ffffff;
+  --accent:    #2f6ef7;
+  --accent-bg: #eef3ff;
+  --accent-2:  #7c3aed;
+  --green:     #0f7b6c;
+  --green-bg:  #e8f5f3;
+  --red:       #c93b3b;
+  --red-bg:    #fdeaea;
+  --amber:     #9a6700;
+  --amber-bg:  #fdf6e3;
+  --blue-bg:   #e8eeff;
+  --sidebar-w: 240px;
+  --topbar-h:  44px;
+  --r:         6px;
+  --r-sm:      4px;
+  --mono:      'Geist Mono', monospace;
+  --sans:      'Geist', system-ui, sans-serif;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow:    0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
 }
-body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.6}
-.shell{display:grid;grid-template-columns:200px 1fr;min-height:100vh}
 
-/* Sidebar */
-.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:20px 0;position:fixed;width:200px;height:100vh;overflow-y:auto;z-index:10}
-.logo{padding:0 20px 20px;border-bottom:1px solid var(--border);margin-bottom:12px}
-.logo-mark{font-size:11px;font-weight:500;color:#fff;letter-spacing:.04em}
-.logo-sub{font-size:10px;color:var(--muted);margin-top:2px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:8px 20px;cursor:pointer;color:var(--muted);font-size:12px;transition:all .1s;border-left:2px solid transparent}
-.nav-item:hover{color:var(--text);background:var(--surface2)}
-.nav-item.active{color:#fff;border-left-color:var(--accent);background:var(--surface2)}
-.nav-section{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#374151;padding:12px 20px 4px}
+html, body { height: 100%; overflow: hidden }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
 
-/* Main */
-.main{margin-left:200px;padding:0}
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
-.topbar-title{font-size:13px;font-weight:500;color:#fff}
-.status-pill{display:flex;align-items:center;gap:6px;font-size:11px;padding:4px 12px;border-radius:99px;border:1px solid var(--border2)}
-.status-dot{width:6px;height:6px;border-radius:50%}
-.dot-green{background:var(--green);box-shadow:0 0 6px var(--green)}
-.dot-amber{background:var(--amber)}
-.dot-red{background:var(--red)}
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px }
+::-webkit-scrollbar-track { background: transparent }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2) }
 
-.content{padding:28px}
+/* ── Shell ── */
+.shell { display: flex; height: 100vh; overflow: hidden }
 
-/* Stat cards */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
-.stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 20px}
-.stat-label{font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
-.stat-val{font-size:28px;font-weight:300;color:#fff;line-height:1}
-.stat-val small{font-size:14px;color:var(--muted)}
-.stat-delta{font-size:10px;margin-top:6px}
-.delta-up{color:var(--green)}
-.delta-dn{color:var(--red)}
+/* ── Sidebar ── */
+.sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
-/* Server table */
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:24px;overflow:hidden}
-.panel-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.panel-title{font-size:12px;font-weight:500;color:#fff}
-table{width:100%;border-collapse:collapse}
-th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:10px 20px;text-align:left;border-bottom:1px solid var(--border);font-weight:400}
-td{padding:12px 20px;border-bottom:1px solid var(--border);vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:var(--surface2)}
-.badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:3px 10px;border-radius:4px;font-weight:500}
-.badge-green{background:#052e16;color:#4ade80;border:1px solid #14532d}
-.badge-red{background:#2d0606;color:#f87171;border:1px solid #7f1d1d}
-.badge-amber{background:#291800;color:#fbbf24;border:1px solid #78350f}
-.badge-gray{background:#111318;color:#6b7280;border:1px solid #1f2530}
-.circuit{font-size:10px;color:var(--muted)}
+.logo {
+  padding: 14px 14px 10px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-bottom: 1px solid var(--border);
+}
 
-/* Log stream */
-.log-stream{background:#060709;border:1px solid var(--border);border-radius:8px;height:320px;overflow-y:auto;padding:16px;font-size:11px;line-height:1.9}
-.log-line{display:flex;gap:12px}
-.log-ts{color:#374151;flex-shrink:0;width:85px}
-.log-level-info{color:var(--accent)}
-.log-level-warn{color:var(--amber)}
-.log-level-error{color:var(--red)}
-.log-msg{color:var(--muted)}
-.log-msg b{color:var(--text);font-weight:400}
+.logo-icon {
+  width: 26px; height: 26px;
+  border-radius: 5px;
+  background: var(--text);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.logo-icon svg { width: 13px; height: 13px; color: var(--text-inv) }
 
-/* Chart area */
-.chart-area{height:120px;position:relative;margin-top:4px}
-.chart-area canvas{width:100%;height:100%}
+.logo-text .name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.logo-text .ver {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+}
 
-/* Refresh btn */
-.btn-sm{background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:4px;cursor:pointer;transition:all .1s}
-.btn-sm:hover{color:var(--text);border-color:#4b5563}
+/* ── Nav ── */
+.nav-group { padding: 8px 8px 0 }
 
-/* Empty state */
-.empty{padding:40px;text-align:center;color:var(--muted);font-size:12px}
+.nav-section-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+  padding: 10px 8px 4px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--text-2);
+  user-select: none;
+  transition: background 0.1s, color 0.1s;
+  position: relative;
+}
+.nav-item:hover { background: var(--bg-hover); color: var(--text) }
+.nav-item.active { background: var(--bg-active); color: var(--text); font-weight: 500 }
+
+.nav-item svg { width: 14px; height: 14px; flex-shrink: 0; opacity: 0.6 }
+.nav-item.active svg, .nav-item:hover svg { opacity: 1 }
+
+.nav-badge {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--text-3);
+  background: var(--bg-active);
+  padding: 1px 6px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+.nav-item.active .nav-badge { background: var(--border); color: var(--text-2) }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 2px var(--green-bg);
+  flex-shrink: 0;
+  animation: dot-breathe 2.5s ease-in-out infinite;
+}
+@keyframes dot-breathe {
+  0%,100% { box-shadow: 0 0 0 2px var(--green-bg) }
+  50%      { box-shadow: 0 0 0 4px var(--green-bg) }
+}
+.sidebar-footer .label { font-size: 12px; color: var(--text-2); font-weight: 500 }
+.sidebar-footer .sub   { font-family: var(--mono); font-size: 10px; color: var(--text-3) }
+
+/* ── Main ── */
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden }
+
+/* ── Topbar ── */
+.topbar {
+  height: var(--topbar-h);
+  min-height: var(--topbar-h);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 12px;
+  background: var(--bg);
+}
+
+.topbar-crumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.topbar-crumb .sep { color: var(--text-3) }
+.topbar-crumb .cur { color: var(--text); font-weight: 500 }
+
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px }
+
+.topbar-ts {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: background 0.12s;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-2);
+}
+.btn:hover { background: var(--bg-hover); color: var(--text); border-color: var(--border-hi) }
+.btn:active { background: var(--bg-active) }
+.btn svg { width: 13px; height: 13px }
+
+.btn-primary {
+  background: var(--text);
+  color: var(--text-inv);
+  border-color: transparent;
+}
+.btn-primary:hover { background: #1a1a1a; color: var(--text-inv); border-color: transparent }
+.btn-primary:active { background: #111 }
+
+.pill-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--green);
+  background: var(--green-bg);
+}
+.pill-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* ── Content ── */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 32px 40px;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Animate tab switch */
+.tab-pane { display: none }
+.tab-pane.active {
+  display: block;
+  animation: tabIn 0.18s ease-out;
+}
+@keyframes tabIn { from { opacity: 0; transform: translateY(5px) } to { opacity: 1; transform: translateY(0) } }
+
+/* ── Page header ── */
+.page-header { margin-bottom: 28px }
+.page-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+.page-desc { font-size: 13.5px; color: var(--text-2) }
+
+/* ── Divider ── */
+.divider { height: 1px; background: var(--border); margin: 24px 0 }
+
+/* ── Stats row ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.stat-cell {
+  background: var(--bg);
+  padding: 20px 22px;
+  transition: background 0.1s;
+}
+.stat-cell:hover { background: var(--bg-hover) }
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-bottom: 10px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stat-label svg { width: 12px; height: 12px; opacity: 0.7 }
+
+.stat-value {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--text);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.stat-value sup { font-size: 13px; color: var(--text-2); font-weight: 400; letter-spacing: 0 }
+
+.stat-sub {
+  font-size: 11.5px;
+  color: var(--text-3);
+  font-family: var(--mono);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.stat-sub.up   { color: var(--green) }
+.stat-sub.down { color: var(--red) }
+
+/* ── Section header ── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.section-title svg { width: 13px; height: 13px; color: var(--text-2) }
+.section-meta { font-size: 12px; color: var(--text-3); font-family: var(--mono) }
+
+/* ── Card ── */
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--bg);
+  margin-bottom: 20px;
+}
+
+/* ── Chart ── */
+.chart-wrap {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.chart-area {
+  height: 100px;
+  position: relative;
+  display: flex;
+  gap: 0;
+}
+.chart-y {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 2px 0;
+  min-width: 28px;
+  margin-right: 10px;
+}
+.chart-y span {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--text-3);
+  line-height: 1;
+}
+.chart-canvas-wrap { flex: 1; position: relative }
+canvas { display: block; width: 100%; height: 100% }
+
+/* ── Table ── */
+.table-wrap { overflow-x: auto }
+table { width: 100%; border-collapse: collapse }
+
+thead tr { border-bottom: 1px solid var(--border) }
+th {
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-3);
+  padding: 9px 16px;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+td {
+  padding: 10px 16px;
+  font-size: 13.5px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+tr:last-child td { border-bottom: none }
+tbody tr { transition: background 0.08s }
+tbody tr:hover { background: var(--bg-hover) }
+
+.td-mono { font-family: var(--mono); font-size: 12.5px }
+.td-name { font-weight: 500; color: var(--text) }
+.td-dim  { color: var(--text-2) }
+.td-faint { color: var(--text-3); font-family: var(--mono); font-size: 12px }
+
+/* ── Badges ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.badge-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.badge-green  { background: var(--green-bg);  color: var(--green)  }
+.badge-red    { background: var(--red-bg);    color: var(--red)    }
+.badge-amber  { background: var(--amber-bg);  color: var(--amber)  }
+.badge-gray   { background: var(--bg-active); color: var(--text-2) }
+.badge-blue   { background: var(--blue-bg);   color: var(--accent) }
+.badge-accent { background: var(--accent-bg); color: var(--accent) }
+
+/* ── Empty state ── */
+.empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+/* ── Log stream ── */
+.log-toolbar {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.log-toolbar-label {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.log-stream {
+  height: calc(100vh - var(--topbar-h) - 200px);
+  overflow-y: auto;
+  padding: 10px 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.85;
+}
+.log-row {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 2px 16px;
+  transition: background 0.08s;
+}
+.log-row:hover { background: var(--bg-hover) }
+.log-ts    { color: var(--text-3); min-width: 70px; font-size: 11px; flex-shrink: 0 }
+.log-level { min-width: 34px; flex-shrink: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.04em }
+.log-level.INFO  { color: var(--accent) }
+.log-level.WARN  { color: var(--amber) }
+.log-level.ERROR { color: var(--red) }
+.log-msg { color: var(--text-2); flex: 1 }
+.log-hi  { color: var(--text); font-weight: 500 }
+.log-dim { color: var(--text-3) }
+
+/* ── Config pre ── */
+.config-pre {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: var(--text-2);
+  padding: 20px 22px;
+  overflow-x: auto;
+  white-space: pre;
+}
+.config-comment { color: var(--text-3) }
+.config-key     { color: var(--text) }
+.config-val     { color: var(--accent) }
+
+/* ── Auth ── */
+.auth-info { padding: 20px 20px; font-size: 13px; color: var(--text-2); line-height: 2 }
+.code-chip {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--bg-active);
+  color: var(--text);
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+.key-reveal {
+  display: none;
+  background: var(--green-bg);
+  border: 1px solid rgba(15,123,108,0.18);
+  border-radius: var(--r-sm);
+  padding: 14px 16px;
+  margin: 16px 20px;
+}
+.key-reveal.show { display: block }
+.key-label { font-size: 11px; font-weight: 600; color: var(--green); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px }
+.key-val   { font-family: var(--mono); font-size: 12.5px; color: var(--text); word-break: break-all; line-height: 1.6 }
+
+/* ── Input ── */
+.input {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  padding: 5px 10px;
+  border-radius: var(--r-sm);
+  outline: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.input::placeholder { color: var(--text-3) }
+.input:focus { border-color: var(--border-hi); box-shadow: 0 0 0 2px rgba(47,110,247,0.08) }
+
+/* ── Property row (for servers detail) ── */
+.prop { display: flex; gap: 10px; align-items: flex-start; padding: 11px 18px; border-bottom: 1px solid var(--border) }
+.prop:last-child { border-bottom: none }
+.prop-key   { font-size: 12.5px; color: var(--text-2); min-width: 130px; flex-shrink: 0 }
+.prop-value { font-size: 13px; color: var(--text) }
+
+/* ── Callout ── */
+.callout {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.65;
+  margin-bottom: 16px;
+}
+.callout-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px }
 </style>
 </head>
 <body>
+
 <div class="shell">
-  <!-- Sidebar -->
+
+  <!-- ─── SIDEBAR ─── -->
   <nav class="sidebar">
     <div class="logo">
-      <div class="logo-mark">mcp-gateway</div>
-      <div class="logo-sub">v0.1.0-alpha</div>
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <div class="name">mcp-gateway</div>
+        <div class="ver">v0.1.0-alpha</div>
+      </div>
     </div>
-    <div class="nav-section">monitor</div>
-    <div class="nav-item active" onclick="showTab('overview')">◈ Overview</div>
-    <div class="nav-item" onclick="showTab('servers')">⬡ Servers</div>
-    <div class="nav-item" onclick="showTab('tools')">⚙ Tools</div>
-    <div class="nav-item" onclick="showTab('logs')">⌘ Live Logs</div>
-    <div class="nav-section">config</div>
-    <div class="nav-item" onclick="showTab('config')">✦ Config</div>
-    <div class="nav-item" onclick="showTab('auth')">⊕ Auth Keys</div>
+
+    <div class="nav-group">
+      <div class="nav-section-label">Monitor</div>
+
+      <a class="nav-item active" data-tab="overview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Overview
+      </a>
+      <a class="nav-item" data-tab="servers">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="6" cy="18" r="1" fill="currentColor" stroke="none"/></svg>
+        Servers
+        <span class="nav-badge" id="nb-servers">3</span>
+      </a>
+      <a class="nav-item" data-tab="tools">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+        Tools
+        <span class="nav-badge" id="nb-tools">51</span>
+      </a>
+      <a class="nav-item" data-tab="logs">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+        Live Logs
+      </a>
+
+      <div class="nav-section-label" style="margin-top:8px">Configure</div>
+
+      <a class="nav-item" data-tab="config">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        Config
+      </a>
+      <a class="nav-item" data-tab="auth">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        Auth Keys
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="status-dot" id="sidebar-status-dot"></div>
+      <div>
+        <div class="label" id="sidebar-status-label">Gateway healthy</div>
+        <div class="sub">:8080 · 3 servers</div>
+      </div>
+    </div>
   </nav>
 
-  <!-- Main -->
+  <!-- ─── MAIN ─── -->
   <div class="main">
     <div class="topbar">
-      <span class="topbar-title" id="page-title">Overview</span>
-      <div style="display:flex;align-items:center;gap:12px">
-        <span style="font-size:11px;color:var(--muted)" id="last-refresh">—</span>
-        <button class="btn-sm" onclick="refresh()">↻ Refresh</button>
-        <div class="status-pill" id="gateway-status">
-          <div class="status-dot dot-green"></div>
-          <span>Healthy</span>
+      <div class="topbar-crumb">
+        <span>mcp-gateway</span>
+        <span class="sep">/</span>
+        <span class="cur" id="page-title">Overview</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-ts" id="last-refresh"></span>
+        <button class="btn" onclick="refresh()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+        <div class="pill-status" id="gateway-pill">
+          <span class="pill-dot"></span>
+          <span id="pill-label">Healthy</span>
         </div>
       </div>
     </div>
 
     <div class="content">
 
-      <!-- OVERVIEW TAB -->
-      <div id="tab-overview">
-        <div class="stats">
-          <div class="stat">
-            <div class="stat-label">Total Requests</div>
-            <div class="stat-val" id="stat-requests">0</div>
-            <div class="stat-delta delta-up" id="stat-rps">— req/s</div>
+      <!-- ═══ OVERVIEW ═══ -->
+      <div id="tab-overview" class="tab-pane active">
+
+        <div class="page-header">
+          <div class="page-title">Overview</div>
+          <div class="page-desc">Real-time gateway metrics and backend server health</div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+          <div class="stat-cell">
+            <div class="stat-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Total Requests
+            </div>
+            <div class="stat-value" id="stat-requests">0</div>
+            <div class="stat-sub up" id="stat-rps">— req/s</div>
           </div>
-          <div class="stat">
-            <div class="stat-label">Aggregated Tools</div>
-            <div class="stat-val" id="stat-tools">0</div>
-            <div class="stat-delta" style="color:var(--muted)" id="stat-servers-count">— servers</div>
+          <div class="stat-cell">
+            <div class="stat-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+              Aggregated Tools
+            </div>
+            <div class="stat-value" id="stat-tools">0</div>
+            <div class="stat-sub" id="stat-server-ct">— servers</div>
           </div>
-          <div class="stat">
-            <div class="stat-label">Healthy Servers</div>
-            <div class="stat-val" id="stat-healthy">0</div>
-            <div class="stat-delta delta-dn" id="stat-unhealthy"></div>
+          <div class="stat-cell">
+            <div class="stat-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Healthy Servers
+            </div>
+            <div class="stat-value" id="stat-healthy">0</div>
+            <div class="stat-sub" id="stat-unhealthy"></div>
           </div>
-          <div class="stat">
-            <div class="stat-label">Avg Latency</div>
-            <div class="stat-val" id="stat-latency">—<small>ms</small></div>
-            <div class="stat-delta" style="color:var(--muted)">p95</div>
+          <div class="stat-cell">
+            <div class="stat-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Avg Latency
+            </div>
+            <div class="stat-value" id="stat-latency">—<sup>ms</sup></div>
+            <div class="stat-sub">p95 threshold</div>
           </div>
         </div>
 
-        <!-- Sparkline -->
-        <div class="panel" style="margin-bottom:24px">
-          <div class="panel-header">
-            <span class="panel-title">Request throughput</span>
-            <span style="font-size:10px;color:var(--muted)">last 60s</span>
+        <!-- Throughput chart -->
+        <div class="section-header">
+          <div class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Request Throughput
           </div>
-          <div style="padding:16px 20px">
+          <div class="section-meta">last 60 seconds</div>
+        </div>
+
+        <div class="card" style="margin-bottom:24px">
+          <div class="chart-wrap">
             <div class="chart-area">
-              <canvas id="sparkline"></canvas>
+              <div class="chart-y">
+                <span id="y-max">0</span>
+                <span id="y-mid">0</span>
+                <span>0</span>
+              </div>
+              <div class="chart-canvas-wrap">
+                <canvas id="sparkline"></canvas>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Server status table -->
-        <div class="panel">
-          <div class="panel-header">
-            <span class="panel-title">Backend servers</span>
+        <!-- Server table -->
+        <div class="section-header">
+          <div class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg>
+            Backend Servers
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th><th>Transport</th><th>Status</th><th>Tools</th><th>Failures</th><th>Circuit</th><th>Last check</th>
-              </tr>
-            </thead>
-            <tbody id="server-table-body">
-              <tr><td colspan="7" class="empty">Loading...</td></tr>
-            </tbody>
-          </table>
+          <div class="section-meta" id="server-count-sub">— registered</div>
         </div>
-      </div>
 
-      <!-- SERVERS TAB -->
-      <div id="tab-servers" style="display:none">
-        <div class="panel">
-          <div class="panel-header"><span class="panel-title">Registered servers</span></div>
-          <table>
-            <thead><tr><th>Name</th><th>Transport</th><th>URL / Command</th><th>Auth</th><th>Routing</th><th>Health check</th></tr></thead>
-            <tbody id="servers-detail-body"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- TOOLS TAB -->
-      <div id="tab-tools" style="display:none">
-        <div class="panel">
-          <div class="panel-header">
-            <span class="panel-title">Aggregated tools</span>
-            <input id="tool-filter" placeholder="Filter tools…" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:4px;width:200px" oninput="filterTools()">
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Name</th><th>Transport</th><th>Status</th><th>Tools</th><th>Failures</th><th>Circuit</th><th>Last Check</th></tr>
+              </thead>
+              <tbody id="server-table-body">
+                <tr><td colspan="7" class="empty">Loading…</td></tr>
+              </tbody>
+            </table>
           </div>
-          <table>
-            <thead><tr><th>Tool name</th><th>Backend server</th><th>Description</th></tr></thead>
-            <tbody id="tools-table-body"></tbody>
-          </table>
         </div>
-      </div>
 
-      <!-- LOGS TAB -->
-      <div id="tab-logs" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <span style="font-size:11px;color:var(--muted)">Simulated log stream (connect to /logs SSE endpoint in production)</span>
-          <button class="btn-sm" onclick="clearLogs()">Clear</button>
+      </div><!-- /overview -->
+
+      <!-- ═══ SERVERS ═══ -->
+      <div id="tab-servers" class="tab-pane">
+        <div class="page-header">
+          <div class="page-title">Backend Servers</div>
+          <div class="page-desc">Registered upstream MCP servers and their configuration</div>
         </div>
-        <div class="log-stream" id="log-stream"></div>
-      </div>
-
-      <!-- CONFIG TAB -->
-      <div id="tab-config" style="display:none">
-        <div class="panel">
-          <div class="panel-header"><span class="panel-title">gateway.yaml (read-only view)</span></div>
-          <pre id="config-view" style="padding:20px;font-size:11.5px;line-height:1.9;color:#9ca3af;overflow-x:auto"></pre>
-        </div>
-      </div>
-
-      <!-- AUTH TAB -->
-      <div id="tab-auth" style="display:none">
-        <div class="panel">
-          <div class="panel-header">
-            <span class="panel-title">API Keys</span>
-            <button class="btn-sm" onclick="generateKey()">+ Generate key</button>
-          </div>
-          <div style="padding:20px">
-            <div id="generated-key" style="display:none;background:#060709;border:1px solid var(--border2);border-radius:6px;padding:16px;margin-bottom:16px;font-size:12px">
-              <div style="color:var(--muted);margin-bottom:6px;font-size:10px;text-transform:uppercase;letter-spacing:.1em">New key (copy now — shown once)</div>
-              <div id="key-value" style="color:var(--green);word-break:break-all"></div>
-            </div>
-            <div style="color:var(--muted);font-size:11px">
-              Keys are managed via the <code style="color:var(--accent)">GATEWAY_API_KEY</code> environment variable or the <code style="color:var(--accent)">gateway.auth.secret</code> config field.<br>
-              Run <code style="color:var(--accent)">make generate-key</code> to produce a new 256-bit key.
-            </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Name</th><th>Transport</th><th>URL / Command</th><th>Auth</th><th>Routing</th><th>Health Check</th></tr>
+              </thead>
+              <tbody id="servers-detail-body">
+                <tr><td colspan="6" class="empty">Loading…</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
 
-    </div>
-  </div>
-</div>
+      <!-- ═══ TOOLS ═══ -->
+      <div id="tab-tools" class="tab-pane">
+        <div class="page-header">
+          <div class="page-title">Tool Registry</div>
+          <div class="page-desc">All tools aggregated from connected backend servers</div>
+        </div>
+        <div class="card">
+          <div style="padding:12px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between">
+            <div style="font-size:12.5px; color:var(--text-2)" id="tool-count-label">— tools</div>
+            <input class="input" id="tool-filter" placeholder="Filter tools…" oninput="filterTools()" style="width:180px">
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Tool</th><th>Server</th><th>Description</th></tr>
+              </thead>
+              <tbody id="tools-table-body">
+                <tr><td colspan="3" class="empty">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ LOGS ═══ -->
+      <div id="tab-logs" class="tab-pane">
+        <div class="page-header">
+          <div class="page-title">Live Logs</div>
+          <div class="page-desc">Streaming gateway event log · connect <code style="font-family:var(--mono);font-size:12px;background:var(--bg-active);padding:1px 5px;border-radius:3px">/logs</code> SSE endpoint in production</div>
+        </div>
+        <div class="card">
+          <div class="log-toolbar">
+            <div class="log-toolbar-label">Simulated stream</div>
+            <button class="btn" onclick="clearLogs()" style="font-size:12px;padding:4px 10px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              Clear
+            </button>
+          </div>
+          <div class="log-stream" id="log-stream"></div>
+        </div>
+      </div>
+
+      <!-- ═══ CONFIG ═══ -->
+      <div id="tab-config" class="tab-pane">
+        <div class="page-header">
+          <div class="page-title">Configuration</div>
+          <div class="page-desc">Live gateway.yaml — read-only view</div>
+        </div>
+        <div class="card">
+          <pre class="config-pre" id="config-view"></pre>
+        </div>
+      </div>
+
+      <!-- ═══ AUTH ═══ -->
+      <div id="tab-auth" class="tab-pane">
+        <div class="page-header">
+          <div class="page-title">Auth Keys</div>
+          <div class="page-desc">Manage API keys for gateway access</div>
+        </div>
+
+        <div class="callout">
+          <div class="callout-icon">🔑</div>
+          <div>Keys are managed via <code class="code-chip">GATEWAY_API_KEY</code> or <code class="code-chip">gateway.auth.secret</code>. Run <code class="code-chip">make generate-key</code> to produce a new 256-bit key from the CLI.</div>
+        </div>
+
+        <div class="card">
+          <div style="padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between">
+            <div style="font-size:13px; font-weight:500">API Keys</div>
+            <button class="btn btn-primary" onclick="generateKey()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Generate Key
+            </button>
+          </div>
+          <div class="key-reveal" id="generated-key">
+            <div class="key-label">New key — copy now, shown once</div>
+            <div class="key-val" id="key-value"></div>
+          </div>
+          <div class="auth-info">
+            No keys have been generated this session. Click <strong>Generate Key</strong> to create a new 256-bit API key.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
 
 <script>
-// ── State ─────────────────────────────────────────────────────────────
+// ── State ─────────────────────────────────────────────────────────
 const BASE = window.location.origin
 const state = {
   servers: [],
   tools: [],
   requests: 0,
   rpsHistory: new Array(60).fill(0),
-  prevRequests: 0,
   currentTab: 'overview',
 }
 
-// ── Simulated data (in production, fetch from /health and /metrics) ──
+// ── Simulate ──────────────────────────────────────────────────────
 function simulateState() {
   state.servers = [
-    { name: 'filesystem-mcp', transport: 'http', url: 'http://localhost:3001', healthy: true, circuitOpen: false, failureCount: 0, lastCheck: new Date().toISOString(), tools: 12, auth: 'none', routing: 'none' },
-    { name: 'github-mcp', transport: 'http', url: 'http://localhost:3002', healthy: true, circuitOpen: false, failureCount: 0, lastCheck: new Date().toISOString(), tools: 31, auth: 'bearer', routing: 'prefix: github_' },
-    { name: 'postgres-mcp', transport: 'stdio', url: '', healthy: true, circuitOpen: false, failureCount: 0, lastCheck: new Date().toISOString(), tools: 8, auth: 'none', routing: 'none' },
+    { name:'filesystem-mcp', transport:'http',  url:'http://localhost:3001', healthy:true,  circuitOpen:false, failureCount:0, lastCheck:new Date().toISOString(), tools:12, auth:'none',   routing:'capability lookup' },
+    { name:'github-mcp',     transport:'http',  url:'http://localhost:3002', healthy:true,  circuitOpen:false, failureCount:0, lastCheck:new Date().toISOString(), tools:31, auth:'bearer', routing:'prefix: github_'   },
+    { name:'postgres-mcp',   transport:'stdio', url:'',                      healthy:true,  circuitOpen:false, failureCount:0, lastCheck:new Date().toISOString(), tools:8,  auth:'none',   routing:'capability lookup' },
   ]
   state.tools = [
-    ...Array.from({length: 12}, (_, i) => ({ name: `fs_${['read_file','write_file','list_dir','delete_file','copy_file','move_file','mkdir','stat','search','watch','read_symlink','link'][i]}`, server: 'filesystem-mcp', description: 'Filesystem operation' })),
-    ...Array.from({length: 6}, (_, i) => ({ name: `github_${['create_issue','list_prs','create_pr','merge_pr','list_commits','get_repo'][i]}`, server: 'github-mcp', description: 'GitHub operation' })),
-    ...Array.from({length: 4}, (_, i) => ({ name: `pg_${['query','insert','update','delete'][i]}`, server: 'postgres-mcp', description: 'Postgres operation' })),
+    ...['read_file','write_file','list_dir','delete_file','copy_file','move_file','mkdir','stat','search','watch','read_symlink','link']
+      .map(n => ({ name:`fs_${n}`, server:'filesystem-mcp', description:'Filesystem operation' })),
+    ...['create_issue','list_prs','create_pr','merge_pr','list_commits','get_repo','list_repos','add_label','close_issue','create_branch','list_branches','list_issues','delete_branch','get_commit','add_comment','get_user','list_members','create_release','get_release','list_workflows','trigger_workflow','list_runs','get_run','get_artifact','delete_artifact','list_secrets','create_secret','delete_secret','get_content','create_file']
+      .map(n => ({ name:`github_${n}`, server:'github-mcp', description:'GitHub API operation' })),
+    ...['query','insert','update','delete','begin_tx','commit','rollback','list_tables']
+      .map(n => ({ name:`pg_${n}`, server:'postgres-mcp', description:'Postgres operation' })),
   ]
-
-  // Simulate incrementing requests
-  const delta = Math.floor(Math.random() * 8)
+  const delta = Math.floor(Math.random() * 9)
   state.requests += delta
   state.rpsHistory.push(delta)
   state.rpsHistory.shift()
 }
 
-// ── Fetch real data (when deployed) ──────────────────────────────────
 async function fetchHealth() {
   try {
     const r = await fetch(`${BASE}/health`)
     if (!r.ok) return
     const data = await r.json()
-    state.servers = data.servers.map(s => ({...s, tools: '?', auth: 'configured', routing: 'auto'}))
-  } catch {
-    // Gateway not reachable — use simulated data
-  }
+    state.servers = data.servers.map(s => ({...s, tools:'?', auth:'configured', routing:'auto'}))
+  } catch {}
 }
 
-// ── Render ────────────────────────────────────────────────────────────
+// ── Render overview ───────────────────────────────────────────────
 function renderOverview() {
-  const healthyCount = state.servers.filter(s => s.healthy && !s.circuitOpen).length
-  const totalTools = state.servers.reduce((a, s) => a + (s.tools || 0), 0)
-  const rps = state.rpsHistory[state.rpsHistory.length - 1]
-  const unhealthy = state.servers.length - healthyCount
+  const healthy   = state.servers.filter(s => s.healthy && !s.circuitOpen).length
+  const totalTools = state.servers.reduce((a,s) => a + (s.tools||0), 0)
+  const rps        = state.rpsHistory[state.rpsHistory.length-1]
+  const unhealthy  = state.servers.length - healthy
+  const maxRps     = Math.max(...state.rpsHistory, 1)
 
-  document.getElementById('stat-requests').textContent = state.requests.toLocaleString()
-  document.getElementById('stat-rps').textContent = `${rps} req/s`
-  document.getElementById('stat-tools').textContent = totalTools
-  document.getElementById('stat-servers-count').textContent = `${state.servers.length} servers`
-  document.getElementById('stat-healthy').textContent = healthyCount
-  document.getElementById('stat-unhealthy').textContent = unhealthy > 0 ? `${unhealthy} degraded` : 'all healthy'
-  document.getElementById('stat-latency').innerHTML = `${Math.floor(Math.random()*3+1)}<small>ms</small>`
+  document.getElementById('stat-requests').textContent   = state.requests.toLocaleString()
+  document.getElementById('stat-rps').textContent        = `↑ ${rps} req/s`
+  document.getElementById('stat-tools').textContent      = totalTools
+  document.getElementById('stat-server-ct').textContent  = `${state.servers.length} servers`
+  document.getElementById('stat-healthy').textContent    = healthy
+  document.getElementById('server-count-sub').textContent = `${state.servers.length} registered`
+  document.getElementById('y-max').textContent           = maxRps
+  document.getElementById('y-mid').textContent           = Math.round(maxRps/2)
 
-  // Gateway status pill
-  const pill = document.getElementById('gateway-status')
-  const allHealthy = unhealthy === 0
-  pill.innerHTML = `<div class="status-dot ${allHealthy ? 'dot-green' : 'dot-amber'}"></div><span>${allHealthy ? 'Healthy' : 'Degraded'}</span>`
+  const lat = Math.floor(Math.random()*3+1)
+  document.getElementById('stat-latency').innerHTML = `${lat}<sup>ms</sup>`
 
-  renderServerTable('server-table-body')
+  const uhEl = document.getElementById('stat-unhealthy')
+  uhEl.textContent = unhealthy > 0 ? `${unhealthy} degraded` : 'all healthy'
+  uhEl.className   = 'stat-sub ' + (unhealthy > 0 ? 'down' : 'up')
+
+  // top pill
+  const pill = document.getElementById('gateway-pill')
+  const dot  = pill.querySelector('.pill-dot')
+  const lbl  = document.getElementById('pill-label')
+  if (unhealthy > 0) {
+    pill.style.background = 'var(--amber-bg)'
+    pill.style.color = 'var(--amber)'
+    dot.style.background = 'var(--amber)'
+    lbl.textContent = 'Degraded'
+  } else {
+    pill.style.background = 'var(--green-bg)'
+    pill.style.color = 'var(--green)'
+    dot.style.background = 'var(--green)'
+    lbl.textContent = 'Healthy'
+  }
+
+  // nav badges
+  document.getElementById('nb-servers').textContent = state.servers.length
+  document.getElementById('nb-tools').textContent   = totalTools
+
+  renderServerTable()
   drawSparkline()
 }
 
-function renderServerTable(tbodyId) {
-  const tbody = document.getElementById(tbodyId)
+// ── Server table ──────────────────────────────────────────────────
+function renderServerTable() {
+  const tbody = document.getElementById('server-table-body')
   if (!state.servers.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty">No servers registered</td></tr>'
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">No servers registered</td></tr>`
     return
   }
   tbody.innerHTML = state.servers.map(s => {
     const status = s.healthy && !s.circuitOpen
-      ? `<span class="badge badge-green"><span style="width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block"></span> healthy</span>`
+      ? `<span class="badge badge-green"><span class="badge-dot"></span>healthy</span>`
       : s.circuitOpen
-      ? `<span class="badge badge-red">⊗ circuit open</span>`
-      : `<span class="badge badge-amber">⚠ unhealthy</span>`
-    const circuit = s.circuitOpen ? `<span class="badge badge-red">OPEN</span>` : `<span class="badge badge-gray">closed</span>`
-    const ts = s.lastCheck ? new Date(s.lastCheck).toLocaleTimeString() : '—'
+      ? `<span class="badge badge-red">circuit open</span>`
+      : `<span class="badge badge-amber">unhealthy</span>`
+    const circuit = s.circuitOpen
+      ? `<span class="badge badge-red">open</span>`
+      : `<span class="badge badge-gray">closed</span>`
+    const ts = s.lastCheck ? new Date(s.lastCheck).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}) : '—'
     return `<tr>
-      <td style="color:#fff;font-weight:500">${s.name}</td>
+      <td class="td-mono td-name" style="font-size:13px">${s.name}</td>
       <td><span class="badge badge-gray">${s.transport}</span></td>
       <td>${status}</td>
-      <td style="color:var(--accent)">${s.tools}</td>
-      <td style="color:${s.failureCount > 0 ? 'var(--amber)' : 'var(--muted)'}">${s.failureCount}</td>
+      <td class="td-mono" style="color:var(--accent)">${s.tools}</td>
+      <td class="td-mono" style="color:${s.failureCount>0?'var(--amber)':'var(--text-3)'}">${s.failureCount}</td>
       <td>${circuit}</td>
-      <td style="color:var(--muted)">${ts}</td>
+      <td class="td-faint">${ts}</td>
     </tr>`
   }).join('')
 }
 
+// ── Servers detail ────────────────────────────────────────────────
 function renderServersDetail() {
   const tbody = document.getElementById('servers-detail-body')
   tbody.innerHTML = state.servers.map(s => `<tr>
-    <td style="color:#fff">${s.name}</td>
+    <td class="td-mono td-name" style="font-size:13px">${s.name}</td>
     <td><span class="badge badge-gray">${s.transport}</span></td>
-    <td style="color:var(--muted);font-size:11px">${s.url || s.command || '—'}</td>
-    <td><span class="badge badge-gray">${s.auth || 'none'}</span></td>
-    <td style="color:var(--muted);font-size:11px">${s.routing || 'capability lookup'}</td>
-    <td><span class="badge ${s.healthy ? 'badge-green' : 'badge-gray'}">${s.healthy ? 'enabled' : 'off'}</span></td>
+    <td class="td-mono td-dim" style="font-size:12px">${s.url || 'stdio'}</td>
+    <td><span class="badge badge-blue">${s.auth || 'none'}</span></td>
+    <td class="td-dim" style="font-size:12.5px">${s.routing}</td>
+    <td><span class="badge ${s.healthy?'badge-green':'badge-gray'}">${s.healthy?'enabled':'off'}</span></td>
   </tr>`).join('')
 }
 
+// ── Tools ─────────────────────────────────────────────────────────
 let allTools = []
 function renderTools() {
   allTools = state.tools
   renderFilteredTools(allTools)
 }
-
 function renderFilteredTools(tools) {
+  document.getElementById('tool-count-label').textContent = `${tools.length} tools`
   const tbody = document.getElementById('tools-table-body')
-  tbody.innerHTML = tools.map(t => `<tr>
-    <td style="color:#fff;font-weight:500">${t.name}</td>
-    <td><span class="badge badge-gray" style="font-size:10px">${t.server}</span></td>
-    <td style="color:var(--muted);font-size:11px">${t.description}</td>
-  </tr>`).join('')
+  const serverBadge = {
+    'filesystem-mcp': 'badge-accent',
+    'github-mcp':     'badge-green',
+    'postgres-mcp':   'badge-amber',
+  }
+  tbody.innerHTML = tools.length
+    ? tools.map(t => `<tr>
+        <td class="td-mono td-name" style="font-size:12.5px">${t.name}</td>
+        <td><span class="badge ${serverBadge[t.server]||'badge-gray'}">${t.server}</span></td>
+        <td class="td-dim" style="font-size:13px">${t.description}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="3" class="empty">No tools match</td></tr>`
 }
-
 function filterTools() {
   const q = document.getElementById('tool-filter').value.toLowerCase()
-  renderFilteredTools(allTools.filter(t => t.name.toLowerCase().includes(q) || t.server.toLowerCase().includes(q)))
+  renderFilteredTools(allTools.filter(t => t.name.toLowerCase().includes(q)||t.server.toLowerCase().includes(q)))
 }
 
+// ── Config ────────────────────────────────────────────────────────
 function renderConfig() {
-  document.getElementById('config-view').textContent = `# gateway.yaml (live config)
+  document.getElementById('config-view').textContent =
+`# gateway.yaml
+# ─────────────────────────────────────────────
+
 gateway:
   port: 8080
+  host: "0.0.0.0"
   auth:
-    type: "api-key"
+    type:   "api-key"
     header: "X-Gateway-Key"
 
 servers:
-${state.servers.map(s => `  - name: "${s.name}"
+${state.servers.map(s=>`  - name:      "${s.name}"
     transport: "${s.transport}"
-    url: "${s.url || ''}"`).join('\n')}
+    url:       "${s.url||'stdio'}"
+    health_check:
+      interval:   "30s"
+      timeout:    "5s"
+    circuit_breaker:
+      threshold:   3
+      reset_after: "60s"`).join('\n')}
 
 observability:
   log_format: "json"
-  metrics_path: "/metrics"`
+  log_level:  "info"
+  metrics:
+    enabled: true
+    path:    "/metrics"
+  tracing:
+    enabled: false`
 }
 
-// ── Sparkline (canvas) ────────────────────────────────────────────────
+// ── Sparkline ─────────────────────────────────────────────────────
 function drawSparkline() {
   const canvas = document.getElementById('sparkline')
   if (!canvas) return
-  const dpr = window.devicePixelRatio || 1
-  canvas.width = canvas.offsetWidth * dpr
-  canvas.height = canvas.offsetHeight * dpr
-  const ctx = canvas.getContext('2d')
+  const wrap = canvas.parentElement
+  const dpr  = window.devicePixelRatio || 1
+  const W    = wrap.offsetWidth
+  const H    = wrap.offsetHeight
+  canvas.width  = W * dpr
+  canvas.height = H * dpr
+  canvas.style.width  = W + 'px'
+  canvas.style.height = H + 'px'
+  const ctx  = canvas.getContext('2d')
   ctx.scale(dpr, dpr)
-  const w = canvas.offsetWidth, h = canvas.offsetHeight
+
   const data = state.rpsHistory
-  const max = Math.max(...data, 1)
+  const max  = Math.max(...data, 1)
+  const step = W / (data.length - 1)
+  const pad  = 6
+  const range = H - pad * 2
 
-  ctx.clearRect(0, 0, w, h)
+  ctx.clearRect(0, 0, W, H)
 
-  // Grid lines
-  ctx.strokeStyle = '#1f2530'
-  ctx.lineWidth = 0.5
+  // Grid — very subtle
+  ctx.strokeStyle = 'rgba(0,0,0,0.05)'
+  ctx.lineWidth   = 1
   for (let i = 0; i <= 4; i++) {
-    const y = (h / 4) * i
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke()
+    const y = pad + (range/4)*i
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke()
   }
 
+  const pts = data.map((v,i) => ({ x: i*step, y: pad + range - (v/max)*range }))
+
   // Fill
-  const step = w / (data.length - 1)
   ctx.beginPath()
-  ctx.moveTo(0, h)
-  data.forEach((v, i) => {
-    ctx.lineTo(i * step, h - (v / max) * (h * 0.85))
-  })
-  ctx.lineTo(w, h)
+  ctx.moveTo(0, H)
+  pts.forEach(p => ctx.lineTo(p.x, p.y))
+  ctx.lineTo(W, H)
   ctx.closePath()
-  const grad = ctx.createLinearGradient(0, 0, 0, h)
-  grad.addColorStop(0, 'rgba(59,130,246,0.3)')
-  grad.addColorStop(1, 'rgba(59,130,246,0.02)')
-  ctx.fillStyle = grad
+  const fill = ctx.createLinearGradient(0,0,0,H)
+  fill.addColorStop(0,   'rgba(47,110,247,0.08)')
+  fill.addColorStop(1,   'rgba(47,110,247,0.01)')
+  ctx.fillStyle = fill
   ctx.fill()
 
-  // Line
+  // Line — clean, single color
   ctx.beginPath()
-  data.forEach((v, i) => {
-    const x = i * step, y = h - (v / max) * (h * 0.85)
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
-  })
-  ctx.strokeStyle = '#3b82f6'
-  ctx.lineWidth = 1.5
+  pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y))
+  ctx.strokeStyle = 'rgba(47,110,247,0.7)'
+  ctx.lineWidth   = 1.5
+  ctx.lineJoin    = 'round'
+  ctx.lineCap     = 'round'
   ctx.stroke()
+
+  // End dot
+  const last = pts[pts.length-1]
+  ctx.beginPath(); ctx.arc(last.x, last.y, 3, 0, Math.PI*2)
+  ctx.fillStyle = '#2f6ef7'; ctx.fill()
 }
 
-// ── Log stream ────────────────────────────────────────────────────────
-const logMessages = [
-  ['info',  'registered server', '<b>filesystem-mcp</b>  tools=12'],
-  ['info',  'registered server', '<b>github-mcp</b>      tools=31'],
-  ['info',  'registered server', '<b>postgres-mcp</b>    tools=8'],
-  ['info',  'capability aggregation complete', 'total=51 tools'],
-  ['info',  'gateway listening', 'addr=:8080'],
-  ['info',  'routing tool call', 'tool=<b>github_create_issue</b>  backend=github-mcp  duration_ms=2'],
-  ['info',  'routing tool call', 'tool=<b>fs_read_file</b>         backend=filesystem-mcp  duration_ms=1'],
-  ['warn',  'health check failed', 'server=<b>github-mcp</b>  failures=1  error=connection refused'],
-  ['info',  'health check passed', 'server=<b>github-mcp</b>'],
-  ['info',  'routing tool call', 'tool=<b>pg_query</b>  backend=postgres-mcp  duration_ms=4'],
-  ['error', 'circuit breaker opened', 'server=<b>postgres-mcp</b>  failures=3'],
-  ['info',  'circuit half-open probe', 'server=<b>postgres-mcp</b>'],
-  ['info',  'health check passed', 'server=<b>postgres-mcp</b>'],
+// ── Logs ──────────────────────────────────────────────────────────
+const LOG_MSGS = [
+  ['INFO',  'registered server',           'name=<b class="log-hi">filesystem-mcp</b> tools=12'],
+  ['INFO',  'registered server',           'name=<b class="log-hi">github-mcp</b> tools=31'],
+  ['INFO',  'registered server',           'name=<b class="log-hi">postgres-mcp</b> tools=8'],
+  ['INFO',  'capability aggregation done', 'total=51'],
+  ['INFO',  'gateway listening',           'addr=:8080'],
+  ['INFO',  'tool call routed',            'tool=<b class="log-hi">github_create_issue</b> backend=github-mcp duration=2ms'],
+  ['INFO',  'tool call routed',            'tool=<b class="log-hi">fs_read_file</b> backend=filesystem-mcp duration=1ms'],
+  ['WARN',  'health check failed',         'server=<b class="log-hi">github-mcp</b> failures=1 err=connection_refused'],
+  ['INFO',  'health check recovered',      'server=<b class="log-hi">github-mcp</b>'],
+  ['INFO',  'tool call routed',            'tool=<b class="log-hi">pg_query</b> backend=postgres-mcp duration=4ms'],
+  ['ERROR', 'circuit breaker opened',      'server=<b class="log-hi">postgres-mcp</b> failures=3'],
+  ['INFO',  'circuit probe',               'server=<b class="log-hi">postgres-mcp</b> state=half-open'],
+  ['INFO',  'circuit breaker closed',      'server=<b class="log-hi">postgres-mcp</b>'],
+  ['INFO',  'tool call routed',            'tool=<b class="log-hi">github_list_prs</b> backend=github-mcp duration=3ms'],
 ]
 let logIdx = 0
-
 function appendLog() {
-  const container = document.getElementById('log-stream')
-  if (!container) return
-  const msg = logMessages[logIdx % logMessages.length]
-  logIdx++
-  const ts = new Date().toLocaleTimeString()
-  const div = document.createElement('div')
-  div.className = 'log-line'
-  div.innerHTML = `<span class="log-ts">${ts}</span><span class="log-level-${msg[0]}">${msg[0].padEnd(5)}</span><span class="log-msg">${msg[1]}  ${msg[2]}</span>`
-  container.appendChild(div)
-  container.scrollTop = container.scrollHeight
-  if (container.children.length > 200) container.removeChild(container.firstChild)
+  const el = document.getElementById('log-stream')
+  if (!el) return
+  const [lvl,evt,detail] = LOG_MSGS[logIdx++ % LOG_MSGS.length]
+  const ts = new Date().toLocaleTimeString('en-US',{hour12:false})
+  const row = document.createElement('div')
+  row.className = 'log-row'
+  row.innerHTML = `<span class="log-ts">${ts}</span><span class="log-level ${lvl}">${lvl}</span><span class="log-msg">${evt} <span class="log-dim">${detail}</span></span>`
+  el.appendChild(row)
+  el.scrollTop = el.scrollHeight
+  if (el.children.length > 300) el.removeChild(el.firstChild)
 }
+function clearLogs() { document.getElementById('log-stream').innerHTML = '' }
 
-function clearLogs() {
-  document.getElementById('log-stream').innerHTML = ''
-}
-
-// ── Key generation (simulated) ────────────────────────────────────────
+// ── Auth ──────────────────────────────────────────────────────────
 function generateKey() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
-  let key = ''
-  const arr = new Uint8Array(43)
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const arr   = new Uint8Array(43)
   crypto.getRandomValues(arr)
-  arr.forEach(b => key += chars[b % chars.length])
-  document.getElementById('key-value').textContent = key
-  document.getElementById('generated-key').style.display = 'block'
+  document.getElementById('key-value').textContent = 'gw_' + Array.from(arr,b=>chars[b%chars.length]).join('')
+  document.getElementById('generated-key').classList.add('show')
 }
 
-// ── Tab routing ───────────────────────────────────────────────────────
-function showTab(name) {
-  const tabs = ['overview', 'servers', 'tools', 'logs', 'config', 'auth']
-  tabs.forEach(t => {
-    document.getElementById(`tab-${t}`).style.display = t === name ? 'block' : 'none'
+// ── Tabs ──────────────────────────────────────────────────────────
+const TITLES = { overview:'Overview', servers:'Backend Servers', tools:'Tool Registry', logs:'Live Logs', config:'Configuration', auth:'Auth Keys' }
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const tab = item.dataset.tab
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'))
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'))
+    document.getElementById(`tab-${tab}`)?.classList.add('active')
+    item.classList.add('active')
+    document.getElementById('page-title').textContent = TITLES[tab] || tab
+    state.currentTab = tab
+    if (tab==='servers') renderServersDetail()
+    if (tab==='tools')   renderTools()
+    if (tab==='config')  renderConfig()
   })
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'))
-  event.target.classList.add('active')
-  state.currentTab = name
-  const titles = { overview: 'Overview', servers: 'Backend Servers', tools: 'Tool Registry', logs: 'Live Logs', config: 'Configuration', auth: 'Auth Keys' }
-  document.getElementById('page-title').textContent = titles[name] || name
+})
 
-  if (name === 'servers') renderServersDetail()
-  if (name === 'tools') renderTools()
-  if (name === 'config') renderConfig()
-}
-
-// ── Refresh ───────────────────────────────────────────────────────────
+// ── Refresh ───────────────────────────────────────────────────────
 async function refresh() {
   simulateState()
   await fetchHealth()
   renderOverview()
-  document.getElementById('last-refresh').textContent = 'updated ' + new Date().toLocaleTimeString()
+  const ts = new Date().toLocaleTimeString('en-US',{hour12:false})
+  document.getElementById('last-refresh').textContent = `Updated ${ts}`
 }
 
-// ── Init ──────────────────────────────────────────────────────────────
+// ── Boot ──────────────────────────────────────────────────────────
 simulateState()
 renderOverview()
 setInterval(refresh, 5000)
 setInterval(appendLog, 1800)
-appendLog(); appendLog(); appendLog(); appendLog()
+for (let i=0;i<7;i++) appendLog()
+window.addEventListener('resize', () => { if(state.currentTab==='overview') drawSparkline() })
 </script>
 </body>
 </html>
