@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/configkits/mcp-gateway/internal/version"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -33,7 +34,7 @@ func InitTracer(endpoint string) (func(context.Context) error, error) {
 	res, _ := resource.New(context.Background(),
 		resource.WithAttributes(
 			semconv.ServiceName(serviceName),
-			semconv.ServiceVersion("0.1.0"),
+			semconv.ServiceVersion(version.String),
 		),
 	)
 

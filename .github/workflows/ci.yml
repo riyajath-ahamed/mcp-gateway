@@ -24,7 +24,10 @@ jobs:
         run: go test -race -cover ./...
 
       - name: Build
-        run: go build -o /tmp/mcp-gateway ./cmd/gateway
+        run: |
+          VERSION=$(cat VERSION)
+          go build -ldflags="-X github.com/configkits/mcp-gateway/internal/version.String=${VERSION}" \
+            -o /tmp/mcp-gateway ./cmd/gateway
 
   sdk:
     runs-on: ubuntu-latest

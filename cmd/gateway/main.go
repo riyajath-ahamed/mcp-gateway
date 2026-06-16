@@ -20,9 +20,8 @@ import (
 	"github.com/configkits/mcp-gateway/internal/proxy"
 	"github.com/configkits/mcp-gateway/internal/registry"
 	"github.com/configkits/mcp-gateway/internal/router"
+	"github.com/configkits/mcp-gateway/internal/version"
 )
-
-var version = "dev"
 
 func main() {
 	cfgPath  := flag.String("config", "gateway.yaml", "path to gateway config file")
@@ -31,7 +30,7 @@ func main() {
 	flag.Parse()
 
 	if *printVer {
-		fmt.Printf("mcp-gateway %s\n", version)
+		fmt.Printf("mcp-gateway %s\n", version.String)
 		return
 	}
 	if *genKey {
@@ -125,7 +124,7 @@ func main() {
 		"addr", addr,
 		"servers", len(cfg.Servers),
 		"tools", len(reg.AggregatedTools()),
-		"version", version,
+		"version", version.String,
 		"admin", addr+"/admin/",
 	)
 

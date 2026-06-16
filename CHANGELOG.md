@@ -3,6 +3,15 @@
 All notable changes to `mcp-gateway` are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+<!-- Release process:
+  1. Add entries under [Unreleased]
+  2. When ready to release, move [Unreleased] items to a new version heading
+  3. Update the VERSION file with the new version number
+  4. Run: make version-sync
+  5. Commit: "release: prepare vX.Y.Z"
+  6. Run: make release
+-->
+
 ---
 
 ## [Unreleased]

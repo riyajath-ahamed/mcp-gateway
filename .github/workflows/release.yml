@@ -1,0 +1,125 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract and verify version
+        id: version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          FILE_VERSION="$(cat VERSION)"
+          if [ "$TAG_VERSION" != "$FILE_VERSION" ]; then
+            echo "::error::Tag version ($TAG_VERSION) does not match VERSION file ($FILE_VERSION)"
+            exit 1
+          fi
+          echo "version=$TAG_VERSION" >> "$GITHUB_OUTPUT"
+
+  test:
+    needs: [validate]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache: true
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -race -cover ./...
+
+      - name: Build with version
+        run: |
+          go build -trimpath \
+            -ldflags="-s -w -X github.com/configkits/mcp-gateway/internal/version.String=${{ needs.validate.outputs.version }}" \
+            -o /tmp/mcp-gateway ./cmd/gateway
+
+      - name: Verify version output
+        run: |
+          BUILT_VERSION=$(/tmp/mcp-gateway --version 2>&1 || true)
+          echo "Built version: $BUILT_VERSION"
+          echo "$BUILT_VERSION" | grep -q "${{ needs.validate.outputs.version }}"
+
+  docker:
+    needs: [validate, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/riyajath-ahamed/mcp-gateway:latest
+            ghcr.io/riyajath-ahamed/mcp-gateway:${{ needs.validate.outputs.version }}
+            ghcr.io/riyajath-ahamed/mcp-gateway:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  sdk-publish:
+    needs: [validate, test]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pkg/typeScript-sdk
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: pkg/typeScript-sdk/package-lock.json
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Sync version
+        run: npm version ${{ needs.validate.outputs.version }} --no-git-tag-version --allow-same-version
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  github-release:
+    needs: [validate, test, docker, sdk-publish]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "v${{ needs.validate.outputs.version }}"
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(needs.validate.outputs.version, '-') }}

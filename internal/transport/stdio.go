@@ -11,6 +11,8 @@ import (
 	"os/exec"
 	"sync"
 	"sync/atomic"
+
+	"github.com/configkits/mcp-gateway/internal/version"
 )
 
 // StdioTransport manages a single subprocess MCP server,
@@ -89,7 +91,7 @@ func (t *StdioTransport) initialize(ctx context.Context) error {
 		"capabilities":    map[string]any{},
 		"clientInfo": map[string]any{
 			"name":    "mcp-gateway",
-			"version": "0.1.0",
+			"version": version.String,
 		},
 	}
 	_, err := t.Call(ctx, "initialize", initParams)
