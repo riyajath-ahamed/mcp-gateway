@@ -43,8 +43,8 @@ describe('MCPGatewayClient', () => {
 
       await client.listTools()
 
-      const [_url, opts] = mockFetch.mock.calls[0]
-      expect((opts as RequestInit).headers).toMatchObject({ 'X-Gateway-Key': 'test-key' })
+      const opts = mockFetch.mock.calls[0]?.[1] as RequestInit
+      expect(opts.headers).toMatchObject({ 'X-Gateway-Key': 'test-key' })
     })
   })
 
